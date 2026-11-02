@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="420" viewBox="0 0 980 420">
+  <defs>
+    <style>
+      .title { font: 700 26px 'Noto Sans CJK JP', 'Hiragino Sans', sans-serif; fill: #1f2937; }
+      .label { font: 600 18px 'Noto Sans CJK JP', 'Hiragino Sans', sans-serif; fill: #1f2937; }
+      .small { font: 500 14px 'Noto Sans CJK JP', 'Hiragino Sans', sans-serif; fill: #374151; }
+      .box { fill: #f8fafc; stroke: #2563eb; stroke-width: 2.5; rx: 18; }
+      .box2 { fill: #eefbf7; stroke: #0f766e; stroke-width: 2.5; rx: 18; }
+      .box3 { fill: #fff7ed; stroke: #c2410c; stroke-width: 2.5; rx: 18; }
+      .arrow { stroke: #475569; stroke-width: 3; fill: none; marker-end: url(#arrowhead); }
+      .double { stroke: #475569; stroke-width: 2.2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+      <polygon points="0 0, 10 4, 0 8" fill="#475569" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="420" fill="#ffffff"/>
+  <text x="490" y="40" text-anchor="middle" class="title">学習システムの入出力ブロック図</text>
+
+  <!-- Input side -->
+  <rect x="50" y="90" width="180" height="110" class="box"/>
+  <text x="140" y="125" text-anchor="middle" class="label">入力</text>
+  <text x="140" y="155" text-anchor="middle" class="small">基準軌道CSV</text>
+  <text x="140" y="178" text-anchor="middle" class="small">stroke_id, x, y, z</text>
+
+  <rect x="50" y="240" width="180" height="110" class="box2"/>
+  <text x="140" y="275" text-anchor="middle" class="label">入力</text>
+  <text x="140" y="305" text-anchor="middle" class="small">目標文字画像</text>
+  <text x="140" y="328" text-anchor="middle" class="small">PNG / フォント特徴</text>
+
+  <!-- policy core -->
+  <rect x="320" y="115" width="210" height="170" class="box3"/>
+  <text x="425" y="150" text-anchor="middle" class="label">方策ネットワーク</text>
+  <text x="425" y="180" text-anchor="middle" class="small">観測 s_t</text>
+  <text x="425" y="205" text-anchor="middle" class="small">→ Δx, Δy, pressure</text>
+  <text x="425" y="228" text-anchor="middle" class="small">BC 初期化</text>
+  <text x="425" y="248" text-anchor="middle" class="small">PPO 微調整</text>
+
+  <!-- output side -->
+  <rect x="650" y="90" width="200" height="110" class="box"/>
+  <text x="750" y="125" text-anchor="middle" class="label">出力</text>
+  <text x="750" y="155" text-anchor="middle" class="small">筆先補正量</text>
+  <text x="750" y="178" text-anchor="middle" class="small">Δx, Δy, Z沈み込み</text>
+
+  <rect x="650" y="240" width="200" height="110" class="box2"/>
+  <text x="750" y="275" text-anchor="middle" class="label">出力</text>
+  <text x="750" y="305" text-anchor="middle" class="small">描画結果画像</text>
+  <text x="750" y="328" text-anchor="middle" class="small">Dice / overflow / unpainted</text>
+
+  <!-- arrows -->
+  <path d="M230 145 L320 145" class="arrow"/>
+  <path d="M230 295 L320 295" class="arrow"/>
+  <path d="M530 145 L650 145" class="arrow"/>
+  <path d="M530 295 L650 295" class="arrow"/>
+
+  <!-- between inputs and policy -->
+  <path d="M230 180 C 270 180, 290 180, 320 180" class="double"/>
+  <path d="M230 260 C 270 260, 290 260, 320 260" class="double"/>
+
+  <!-- policy feedback -->
+  <path d="M425 285 C 425 330, 610 330, 650 300" class="double"/>
+  <text x="520" y="345" text-anchor="middle" class="small">実測軌跡・誤差をフィードバック</text>
+</svg>

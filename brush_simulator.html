@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Brush Model 2 - 仮想筆跡シミュレーター</title>
+<style>
+:root{font-family:system-ui,-apple-system,'Noto Sans JP',sans-serif;color:#202b36;background:#edf1f4}*{box-sizing:border-box}body{margin:0;padding:22px}main{max-width:1120px;margin:auto}h1{font-size:23px;margin:0 0 6px}.sub{color:#63717d;margin:0 0 18px}.shell{display:grid;grid-template-columns:minmax(0,1fr) 275px;gap:15px}.paper{background:#fffdfa;border:1px solid #d7dce0;border-radius:15px;overflow:hidden;position:relative;touch-action:none}canvas{width:100%;height:auto;aspect-ratio:1.3;display:block;cursor:crosshair;touch-action:none}.panel{background:white;border:1px solid #dfe5e8;border-radius:15px;padding:17px;display:flex;flex-direction:column;gap:14px}label{font-size:13px;font-weight:650;display:block;margin-bottom:5px}input[type=range]{width:100%}button{border:1px solid #cdd5da;border-radius:9px;background:#fff;padding:10px;font-weight:600;cursor:pointer}button.primary{background:#185c83;color:white;border-color:#185c83}button:hover{filter:brightness(.96)}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}.status{padding:10px;background:#f2f6f8;border-radius:10px;font-size:13px;line-height:1.8;font-variant-numeric:tabular-nums}.note{font-size:12px;line-height:1.6;color:#65727c}.pressure{height:12px;background:#e3e7e9;border-radius:10px;overflow:hidden}.pressure>div{height:100%;width:0;background:linear-gradient(90deg,#83b1c9,#14567f);transition:width .07s}@media(max-width:750px){body{padding:12px}.shell{grid-template-columns:1fr}}
+</style></head><body><main><h1>Brush Model 2 <small style="font-size:13px;color:#687985">接地状態による向きの固定</small></h1><p class="sub">マウス位置 = XY ／ 左ボタンを押し続けた時間 = 筆の沈み込みZ（線幅）</p><section class="shell"><div class="paper"><canvas id="paper" width="1040" height="800" aria-label="筆跡描画キャンバス"></canvas></div><aside class="panel"><div><label>沈み込み Z（正規化値）</label><div class="pressure"><div id="meter"></div></div><div class="status" id="stats">X: --　Y: --<br>Z: 0.00　線幅: 0.0 px<br>押下時間: 0.00 秒</div></div><div><label for="ramp">最大筆圧までの時間: <span id="rampval">1.5</span> 秒</label><input type="range" id="ramp" min="0.2" max="4" step="0.1" value="1.5"></div><div><label for="minw">最小線幅: <span id="minval">3</span> px</label><input type="range" id="minw" min="1" max="18" step="1" value="3"></div><div><label for="maxw">最大線幅: <span id="maxval">36</span> px</label><input type="range" id="maxw" min="10" max="90" step="1" value="36"></div><div><label for="fade">離した後の払い時間: <span id="fadeval">0.4</span> 秒</label><input type="range" id="fade" min="0" max="1.5" step="0.05" value="0.4"></div><div><label for="texture">かすれ・穂先の質感: <span id="textureval">35</span>%</label><input type="range" id="texture" min="0" max="100" step="5" value="35"></div><div><label for="flex">円錐毛束の倒れ込み: <span id="flexval">55</span>%</label><input type="range" id="flex" min="0" max="100" step="5" value="55"></div><div><label for="lock">根元接地時の向き固定: <span id="lockval">90</span>%</label><input type="range" id="lock" min="0" max="100" step="5" value="90"></div><div class="buttons"><button id="clear">全消去</button><button id="undo">1画戻す</button><button class="primary" id="png">PNG保存</button><button class="primary" id="csv">CSV保存</button></div><div class="note">左ボタンを押すと描画開始。押し続けると筆先が沈み込みます。毛束の根元をマウス位置側、細い毛先を進行方向の後方に置いた接地形状、墨の濃淡、毛筋・かすれを近似しています。離した後も指定時間だけマウス位置を追従しながら筆圧が抜け、細い払いになります。離した後にマウスを動かすと払いの向きが変わります。浅い接地では毛先が動きに追従し、深い接地（根元が紙に近い状態）では毛束の向きがほぼ固定されます。固定強度は調整できます。素早く動かすと一部がかすれます。<br><br>CSVには時刻、XY、Z、線幅、pen_down、stroke_idを記録します。質感は描画レンダラ側の設定です。Zは実測力ではなく操作上の仮想筆圧です。</div></aside></section></main>
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('paper'),ctx=canvas.getContext('2d'),meter=document.getElementById('meter'),stats=document.getElementById('stats');
+let strokes=[],active=null,down=false,pointer=null,t0=0,fadeStart=null,fadeInitialZ=0,fadeInitialW=0,raf=0,heading={x:1,y:0},filteredSpeed=0;const tOrigin=performance.now();
+const num=id=>+document.getElementById(id).value;const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const BRUSH_DIRECTION_LOCK_START_PRESSURE=0.35,BRUSH_DIRECTION_LOCK_FULL_PRESSURE=0.5;
+function xy(e){const r=canvas.getBoundingClientRect();return {x:clamp((e.clientX-r.left)*canvas.width/r.width,0,canvas.width),y:clamp((e.clientY-r.top)*canvas.height/r.height,0,canvas.height)}}
+function params(now){const sec=down?(now-t0)/1000:0;if(down){const z=clamp(sec/num('ramp'),0,1);return {sec,z,w:num('minw')+(num('maxw')-num('minw'))*z}}if(fadeStart!==null){const duration=num('fade')*1000;const u=duration>0?clamp((now-fadeStart)/duration,0,1):1;const k=Math.pow(1-u,1.35);return {sec:0,z:fadeInitialZ*k,w:fadeInitialW*k}}return {sec:0,z:0,w:0}}
+// 筆の接触面は進行方向にしなる楕円 + 細い毛筋で近似する。
+// 乱数は固定のハッシュなので「1画戻す」で再描画しても見た目が一致する。
+function noise(a,b,c=0){let n=Math.sin(a*127.1+b*311.7+c*74.7)*43758.5453123;return n-Math.floor(n)}
+// 円錐状の毛束を、運筆の逆方向に倒した接地形状として描く。
+// マウス位置 (x,y) が太い毛束の根元側、移動方向の後方が細い毛先。
+function brushDab(x,y,w,theta,speed,seed){
+  if(w<.4)return;
+  const tex=num('texture')/100,flex=num('flex')/100;
+  const ux=Math.cos(theta),uy=Math.sin(theta),nx=-uy,ny=ux;
+  const r=w*.5;
+  // 後方の毛先を細く、マウス位置側の根元を太くする。
+  // しなりが大きいほど後ろ向きの接地長が増える。
+  const len=r*(.85+1.6*flex)+Math.min(r*.5,speed*r*.20);
+  const baseX=x-ux*len,baseY=y-uy*len;
+  const widthAt=(t)=>{ // t=0: 後方の毛先、t=1: 前方の根元
+    // 毛先は尖り、根元は丸みを帯びる連続的な円錐状の幅分布
+    return r*(.12+.88*Math.pow(t,.82));
+  };
+  ctx.fillStyle='#131718';
+  // 中央の実墨。連続する毛束形状を塗りつぶす。
+  for(let layer=0;layer<3;layer++){
+    const spread=[1,.75,.52][layer],alpha=[.27,.34,.38][layer];
+    ctx.beginPath();
+    for(let side of [1,-1]){
+      for(let i=0;i<=20;i++){
+        const t=side===1?i/20:1-i/20;
+        const taper=widthAt(t)*spread;
+        const bx=baseX+ux*len*t;
+        const by=baseY+uy*len*t;
+        // わずかにカーブさせ、円錐の穂先が倒れている感じを出す
+        const curve=Math.sin(Math.PI*t)*r*.08*flex;
+        const px=bx+nx*(side*taper+curve),py=by+ny*(side*taper+curve);
+        if(side===1&&i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+      }
+    }
+    ctx.closePath();ctx.globalAlpha=alpha;ctx.fill();
+  }
+  // 毛束の繊維は後方の細い毛先から前方の太い根元へ続く。
+  const fast=clamp(speed/1.2,0,1);
+  for(let j=0;j<15;j++){
+    const side=(j-7)/7, n=noise(seed,j,6);
+    if(n<tex*(.15+.55*fast))continue;
+    const t0=.08+.15*noise(seed,j,1),t1=.70+.27*noise(seed,j,2);
+    ctx.beginPath();
+    for(let i=0;i<=9;i++){
+      const t=t0+(t1-t0)*i/9;
+      const bx=baseX+ux*len*t,by=baseY+uy*len*t;
+      const off=side*widthAt(t)*(.75+.15*n)+Math.sin(Math.PI*t)*r*.08*flex;
+      const px=bx+nx*off,py=by+ny*off;
+      if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+    }
+    ctx.globalAlpha=(.12+.34*(1-tex))*(1-Math.abs(side)*.3);
+    ctx.lineWidth=Math.max(.35,r*(.012+.025*n));ctx.strokeStyle='#070b0c';ctx.lineCap='round';ctx.stroke();
+  }
+  // かすれは毛筋の間に紙色を薄く出す（速度が高いほど顕著）。
+  if(tex>.05&&fast>.15){
+    for(let j=0;j<4;j++){
+      if(noise(seed,j,13)>tex*fast*.75)continue;
+      const t0=.17,t1=.72+.18*noise(seed,j,14),side=(noise(seed,j,15)*1.6-.8);
+      ctx.beginPath();
+      for(let i=0;i<=8;i++){
+        const t=t0+(t1-t0)*i/8;
+        const bx=baseX+ux*len*t+nx*side*widthAt(t);
+        const by=baseY+uy*len*t+ny*side*widthAt(t);
+        if(i===0)ctx.moveTo(bx,by);else ctx.lineTo(bx,by);
+      }
+      ctx.strokeStyle='#fffdfa';ctx.globalAlpha=tex*fast*.55;
+      ctx.lineWidth=Math.max(.35,r*.025);ctx.stroke();
+    }
+  }
+  ctx.globalAlpha=1;
+}
+function angleBetween(a,b){
+  return Math.atan2(Math.sin(b-a),Math.cos(b-a));
+}
+function segment(a,b){
+  const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+  const dt=Math.max(1,b.time_ms-a.time_ms);
+  // 記録時に平滑化した向きを使い、再描画時にも全く同じ筆形状にする。
+  const from=a.theta??0,to=b.theta??from;
+  const speed=b.speed??0;
+  const n=Math.max(1,Math.ceil(d/0.85));
+  for(let i=1;i<=n;i++){
+    const u=i/n,width=a.width_px+(b.width_px-a.width_px)*u;
+    const angle=from+angleBetween(from,to)*u;
+    brushDab(a.x+dx*u,a.y+dy*u,width,angle,speed,a.time_ms*.03+i*.231);
+  }
+}
+function repaint(){
+  ctx.globalAlpha=1;ctx.fillStyle='#fffdfa';ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(const s of strokes){if(!s.length)continue;
+    brushDab(s[0].x,s[0].y,s[0].width_px,s[0].theta||0,0,s[0].time_ms*.03);
+    for(let i=1;i<s.length;i++)segment(s[i-1],s[i]);
+  }
+}
+function sample(now,point,force=false){
+  if(!active||(!down&&fadeStart===null)||!point)return;
+  const p=params(now),prev=active[active.length-1];
+  const v={time_ms:Math.round(now-tOrigin),x:+point.x.toFixed(2),y:+point.y.toFixed(2),z:+p.z.toFixed(4),width_px:+p.w.toFixed(2),pen_down:1,stroke_id:strokes.length};
+  if(!force&&prev&&Math.abs(v.time_ms-prev.time_ms)<8&&Math.hypot(v.x-prev.x,v.y-prev.y)<.3)return;
+  if(prev){
+    const dx=v.x-prev.x,dy=v.y-prev.y,d=Math.hypot(dx,dy),dt=Math.max(1,v.time_ms-prev.time_ms);
+    const rawSpeed=d/dt;
+    const k=1-Math.exp(-dt/65); // 約65msの速度・方向の慣性
+    filteredSpeed+=(rawSpeed-filteredSpeed)*k;
+    // 小さな座標ノイズや静止時の方向変更を無視する。
+    if(d>0.65 && rawSpeed>0.025){
+      const target=Math.atan2(dy,dx);
+      const current=Math.atan2(heading.y,heading.x);
+      // atan2の -π/π の境界をまたいでも最短角で回転する。
+      const delta=angleBetween(current,target);
+      // 浅い接地：毛先だけなので回頭自由。深い接地：根元が押さえられて回頭しにくい。
+      // 固定開始圧力までは自由、完全固定圧力以上では向き固定。
+      const u=clamp((p.z-BRUSH_DIRECTION_LOCK_START_PRESSURE)/(BRUSH_DIRECTION_LOCK_FULL_PRESSURE-BRUSH_DIRECTION_LOCK_START_PRESSURE),0,1);
+      const contact=u*u*(3-2*u);
+      const lock=num('lock')/100;
+      const mobility=1-lock*contact;
+      // 慣性を維持しつつ、圧力が小さいと方向を速く更新する。
+      const turn=clamp(k*1.7*mobility,0,0.85);
+      const next=current+delta*turn;
+      heading={x:Math.cos(next),y:Math.sin(next)};
+    }
+  }
+  v.theta=Math.atan2(heading.y,heading.x);
+  v.speed=filteredSpeed;
+  active.push(v);
+  if(prev)segment(prev,v);else brushDab(v.x,v.y,v.width_px,v.theta,0,v.time_ms*.03);
+}
+function update(now){if(!pointer)return;const p=params(now);meter.style.width=p.z*100+'%';stats.innerHTML=`X: ${pointer.x.toFixed(0)}　Y: ${pointer.y.toFixed(0)}<br>Z: ${p.z.toFixed(2)}　線幅: ${p.w.toFixed(1)} px<br>押下時間: ${p.sec.toFixed(2)} 秒`}
+function tick(now){if((down||fadeStart!==null)&&pointer)sample(now,pointer);if(fadeStart!==null&&now-fadeStart>=num('fade')*1000)finishFade(now);update(now);raf=requestAnimationFrame(tick)}
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;e.preventDefault();if(down)return;if(fadeStart!==null)finishFade(performance.now());pointer=xy(e);down=true;t0=performance.now();active=[];heading={x:1,y:0};filteredSpeed=0;strokes.push(active);try{canvas.setPointerCapture(e.pointerId)}catch{}sample(t0,pointer,true);update(t0)});
+canvas.addEventListener('pointermove',e=>{pointer=xy(e);if(down||fadeStart!==null)sample(performance.now(),pointer);update(performance.now())});
+window.addEventListener('pointermove',e=>{if(fadeStart===null||e.target===canvas)return;pointer=xy(e);sample(performance.now(),pointer);update(performance.now())});
+function finishFade(now){
+  if(fadeStart===null)return;
+  if(active&&pointer){sample(now,pointer,true);const v=active[active.length-1];active.push({...v,time_ms:Math.round(now-tOrigin),z:0,width_px:0,pen_down:0})}
+  fadeStart=null;active=null;
+}
+function end(e){
+  if(!down)return;
+  if(e&&typeof e.clientX==='number')pointer=xy(e);
+  const now=performance.now();
+  sample(now,pointer,true);
+  const p=params(now);
+  down=false;
+  fadeInitialZ=p.z;fadeInitialW=p.w;
+  fadeStart=now;
+  if(num('fade')<=0)finishFade(now);
+  update(now);
+}
+canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);canvas.addEventListener('lostpointercapture',()=>{if(down)end(null)});window.addEventListener('blur',()=>{if(down)end(null);if(fadeStart!==null)finishFade(performance.now())});
+function save(data,name,type){const blob=new Blob([data],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function stamp(){return new Date().toISOString().replace(/[:.]/g,'-')}
+document.getElementById('png').onclick=()=>{const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download='brush-'+stamp()+'.png';a.click()};
+document.getElementById('csv').onclick=()=>{const rows=['time_ms,x_px,y_px,z_normalized,width_px,heading_rad,speed_px_per_ms,pen_down,stroke_id'];for(let i=0;i<strokes.length;i++){for(const p of strokes[i])rows.push([p.time_ms,p.x,p.y,p.z,p.width_px,(p.theta??0).toFixed(5),(p.speed??0).toFixed(4),p.pen_down,i+1].join(','));if(strokes[i].length && strokes[i].at(-1).pen_down){let v=strokes[i].at(-1);rows.push([v.time_ms,v.x,v.y,0,0,(v.theta??0).toFixed(5),0,0,i+1].join(','))}}save('\ufeff'+rows.join('\n'),'brush-'+stamp()+'.csv','text/csv;charset=utf-8')};
+document.getElementById('clear').onclick=()=>{end(null);strokes=[];repaint()};document.getElementById('undo').onclick=()=>{end(null);strokes.pop();repaint()};
+for(const [id,output] of [['ramp','rampval'],['minw','minval'],['maxw','maxval'],['fade','fadeval'],['texture','textureval'],['flex','flexval'],['lock','lockval']])document.getElementById(id).addEventListener('input',e=>document.getElementById(output).textContent=e.target.value);
+for(const id of ['texture','flex','lock'])document.getElementById(id).addEventListener('input',repaint);
+repaint();raf=requestAnimationFrame(tick);
+})();
+</script></body></html>

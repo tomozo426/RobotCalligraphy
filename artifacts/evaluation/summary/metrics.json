@@ -1,0 +1,85 @@
+{
+  "evaluation": "Gazebo measured pose and pressure estimated from FK Z",
+  "results": {
+    "ichi": {
+      "baseline": {
+        "dice": 0.6668850311169342,
+        "overflow_rate": 0.0,
+        "unpainted_rate": 0.49975429975429975,
+        "mean_distance_to_corrected_reference_px": 1.3035563036581252
+      },
+      "bc": {
+        "dice": 0.9236127234734154,
+        "overflow_rate": 0.12455985915492958,
+        "unpainted_rate": 0.022604422604422605,
+        "mean_distance_to_corrected_reference_px": 1.308870532899578
+      },
+      "bc_rl": {
+        "dice": 0.8962093862815884,
+        "overflow_rate": 0.17146433041301626,
+        "unpainted_rate": 0.02407862407862408,
+        "mean_distance_to_corrected_reference_px": 1.4812648955381578
+      }
+    },
+    "dai": {
+      "baseline": {
+        "dice": 0.6816108432164734,
+        "overflow_rate": 0.024253731343283583,
+        "unpainted_rate": 0.47626677348287605,
+        "mean_distance_to_corrected_reference_px": 1.309278798613939
+      },
+      "bc": {
+        "dice": 0.9131142829772967,
+        "overflow_rate": 0.12486228424531766,
+        "unpainted_rate": 0.04546364910875225,
+        "mean_distance_to_corrected_reference_px": 1.2649463117298358
+      },
+      "bc_rl": {
+        "dice": 0.8914197471286556,
+        "overflow_rate": 0.13971684053651268,
+        "unpainted_rate": 0.07510514720608852,
+        "mean_distance_to_corrected_reference_px": 1.710716448775505
+      }
+    },
+    "sho": {
+      "baseline": {
+        "dice": 0.62004662004662,
+        "overflow_rate": 0.02504581551618815,
+        "unpainted_rate": 0.5454286528054685,
+        "mean_distance_to_corrected_reference_px": 1.1795955669141667
+      },
+      "bc": {
+        "dice": 0.8630600169061707,
+        "overflow_rate": 0.14608307778087537,
+        "unpainted_rate": 0.12759897465109654,
+        "mean_distance_to_corrected_reference_px": 1.2160998286567029
+      },
+      "bc_rl": {
+        "dice": 0.907538706410071,
+        "overflow_rate": 0.07764705882352942,
+        "unpainted_rate": 0.10680717744232412,
+        "mean_distance_to_corrected_reference_px": 1.5772953827256715
+      }
+    },
+    "gaku": {
+      "baseline": {
+        "dice": 0.7107992678462477,
+        "overflow_rate": 0.060736361193227624,
+        "unpainted_rate": 0.4282676263700311,
+        "mean_distance_to_corrected_reference_px": 1.2576593383051826
+      },
+      "bc": {
+        "dice": 0.6816790898391526,
+        "overflow_rate": 0.34499396863691195,
+        "unpainted_rate": 0.2893832815311631,
+        "mean_distance_to_corrected_reference_px": 2.679871988930229
+      },
+      "bc_rl": {
+        "dice": 0.7383766745468873,
+        "overflow_rate": 0.28766915006842025,
+        "unpainted_rate": 0.23360052347456242,
+        "mean_distance_to_corrected_reference_px": 2.7991378530963282
+      }
+    }
+  }
+}

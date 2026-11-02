@@ -1,0 +1,88 @@
+{
+  "characters": [
+    "ichi",
+    "dai",
+    "sho",
+    "gaku"
+  ],
+  "training_characters": [
+    "ichi",
+    "dai",
+    "sho"
+  ],
+  "held_out_character": "gaku",
+  "held_out_data_used_for_training_or_tuning": false,
+  "models_updated": false,
+  "baseline": "center-corrected reference with fixed brush width",
+  "trajectory_reference": "target cross-section center offset, limited to max XY offset",
+  "results": {
+    "ichi": {
+      "baseline": {
+        "dice": 0.6700997747022852,
+        "overflow_rate": 0.028917910447761194,
+        "unpainted_rate": 0.48845208845208843
+      },
+      "bc": {
+        "dice": 0.921028466483012,
+        "overflow_rate": 0.13571736320551486,
+        "unpainted_rate": 0.01425061425061425
+      },
+      "bc_rl": {
+        "dice": 0.8879042977403633,
+        "overflow_rate": 0.19160951996772893,
+        "unpainted_rate": 0.015233415233415233
+      }
+    },
+    "dai": {
+      "baseline": {
+        "dice": 0.6871794871794872,
+        "overflow_rate": 0.04524403277520485,
+        "unpainted_rate": 0.46324854796715403
+      },
+      "bc": {
+        "dice": 0.9086117647058823,
+        "overflow_rate": 0.14293323863636365,
+        "unpainted_rate": 0.03324654516322852
+      },
+      "bc_rl": {
+        "dice": 0.8917864280955553,
+        "overflow_rate": 0.15034457743924556,
+        "unpainted_rate": 0.06168636090526738
+      }
+    },
+    "sho": {
+      "baseline": {
+        "dice": 0.6260804208944006,
+        "overflow_rate": 0.0800662617338487,
+        "unpainted_rate": 0.5254913130162346
+      },
+      "bc": {
+        "dice": 0.8574588690723075,
+        "overflow_rate": 0.16684578183772167,
+        "unpainted_rate": 0.11677584733694105
+      },
+      "bc_rl": {
+        "dice": 0.9022620571916347,
+        "overflow_rate": 0.09863558840250142,
+        "unpainted_rate": 0.0968385075477072
+      }
+    },
+    "gaku": {
+      "baseline": {
+        "dice": 0.7209484616892025,
+        "overflow_rate": 0.10114830197898851,
+        "unpainted_rate": 0.39816783903157205
+      },
+      "bc": {
+        "dice": 0.6802793380901776,
+        "overflow_rate": 0.365387338903838,
+        "unpainted_rate": 0.2669720268280713
+      },
+      "bc_rl": {
+        "dice": 0.7372380440623321,
+        "overflow_rate": 0.30546716806479607,
+        "unpainted_rate": 0.21446098478652054
+      }
+    }
+  }
+}

@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <world name="default">
+    <physics name="10ms" type="ignored">
+      <max_step_size>0.01</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="ignition-gazebo-physics-system" name="ignition::gazebo::systems::Physics" />
+    <plugin filename="ignition-gazebo-user-commands-system" name="ignition::gazebo::systems::UserCommands" />
+    <plugin filename="ignition-gazebo-scene-broadcaster-system" name="ignition::gazebo::systems::SceneBroadcaster" />
+    <plugin filename="ignition-gazebo-sensors-system" name="ignition::gazebo::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="Table">
+      <static>true</static>
+      <pose>0.29 0 0 0 0 1.5708</pose>
+      <link name="link">
+        <visual name="surface">
+          <pose>0 0 1.0 0 0 0</pose>
+          <geometry><box><size>1.5 0.8 0.03</size></box></geometry>
+          <material>
+            <ambient>0.62 0.48 0.34 1</ambient>
+            <diffuse>0.72 0.57 0.41 1</diffuse>
+          </material>
+        </visual>
+        <visual name="front_left_leg">
+          <pose>0.68 0.38 0.5 0 0 0</pose>
+          <geometry><cylinder><radius>0.02</radius><length>1.0</length></cylinder></geometry>
+          <material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.55 0.55 0.55 1</diffuse></material>
+        </visual>
+        <visual name="front_right_leg">
+          <pose>0.68 -0.38 0.5 0 0 0</pose>
+          <geometry><cylinder><radius>0.02</radius><length>1.0</length></cylinder></geometry>
+          <material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.55 0.55 0.55 1</diffuse></material>
+        </visual>
+        <visual name="back_right_leg">
+          <pose>-0.68 -0.38 0.5 0 0 0</pose>
+          <geometry><cylinder><radius>0.02</radius><length>1.0</length></cylinder></geometry>
+          <material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.55 0.55 0.55 1</diffuse></material>
+        </visual>
+        <visual name="back_left_leg">
+          <pose>-0.68 0.38 0.5 0 0 0</pose>
+          <geometry><cylinder><radius>0.02</radius><length>1.0</length></cylinder></geometry>
+          <material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.55 0.55 0.55 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name="paper">
+      <static>true</static>
+      <pose>0.19 0 1.01525 0 0 0</pose>
+      <link name="link">
+        <visual name="surface">
+          <cast_shadows>false</cast_shadows>
+          <geometry><box><size>0.1024 0.1024 0.0005</size></box></geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <pbr>
+              <metal>
+                <albedo_map>paper_texture.png</albedo_map>
+                <metalness>0</metalness>
+                <roughness>1</roughness>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+      </link>
+      <plugin filename="libtexture_update_probe.so" name="texture_probe::TextureProbeSystem">
+        <topic>/paper/texture_update</topic>
+      </plugin>
+    </model>
+    <model name="paper_camera">
+      <static>true</static>
+      <pose>0.19 0 1.20 0 0 0</pose>
+      <link name="link">
+        <sensor name="paper_view" type="camera">
+          <pose>0 0 0 0 1.5708 0</pose>
+          <topic>/paper/image</topic>
+          <always_on>true</always_on>
+          <update_rate>2</update_rate>
+          <camera>
+            <horizontal_fov>1.2</horizontal_fov>
+            <image><width>256</width><height>256</height><format>R8G8B8</format></image>
+            <clip><near>0.01</near><far>2</far></clip>
+          </camera>
+        </sensor>
+      </link>
+    </model>
+  </world>
+</sdf>

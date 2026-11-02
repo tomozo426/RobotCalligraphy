@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ロボット書道制御課題レポート</title>
+    <style>
+      :root {
+        --bg: #f4f6f9;
+        --panel: #ffffff;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --accent: #2563eb;
+        --accent-soft: #dbeafe;
+        --sub: #0f766e;
+        --line: #dfe7ef;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.7;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 20px 80px;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #0f172a, #1d4ed8);
+        color: white;
+        border-radius: 18px;
+        padding: 32px 28px;
+        box-shadow: 0 20px 45px rgba(37, 99, 235, 0.15);
+      }
+
+      .hero h1 {
+        margin: 0 0 12px;
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1.2;
+      }
+
+      .hero p {
+        margin: 0;
+        font-size: 1.02rem;
+        opacity: 0.92;
+      }
+
+      .section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 24px 28px;
+        margin-top: 24px;
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.04);
+      }
+
+      h2 {
+        margin-top: 0;
+        margin-bottom: 16px;
+        font-size: 1.7rem;
+        border-bottom: 3px solid var(--accent-soft);
+        padding-bottom: 8px;
+      }
+
+      h3 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+        color: var(--sub);
+      }
+
+      p, li {
+        font-size: 1rem;
+      }
+
+      ul {
+        padding-left: 1.3rem;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 16px;
+        margin-top: 18px;
+      }
+
+      .metric {
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 16px 18px;
+      }
+
+      .metric .label {
+        color: var(--muted);
+        font-size: 0.8rem;
+        display: block;
+      }
+
+      .metric .value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-top: 8px;
+      }
+
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 18px;
+        margin-top: 18px;
+      }
+
+      .card {
+        background: #f9fafb;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+      }
+
+      .card img {
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+      }
+
+      .caption {
+        margin-top: 10px;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 20px;
+      }
+
+      .highlight {
+        background: var(--accent-soft);
+        border-left: 4px solid var(--accent);
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-top: 12px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 14px;
+        overflow: hidden;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+      }
+
+      th, td {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #f1f5f9;
+      }
+
+      @media (max-width: 760px) {
+        .two-col { display: block; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="hero">
+        <h1>ロボット書道制御課題レポート</h1>
+        <p>ROS 2 / Gazebo を活用した 模倣学習 + 強化学習による仮想書道システムの開発と評価</p>
+      </header>
+
+      <section class="section">
+        <h2>1. 課題の概要</h2>
+        <p>
+          ロボット学習課題の題材として「ロボットアームによる習字」を選んだ。
+          単なるティーチング制御ではないAIらしさを検証するため、学習時とは異なる未知の文字を書かせて、毛筆体風になるかどうかを最終目標とした。
+          具体的には粗いXY骨格軌道とお手本の毛筆画像のみから、筆先のXY補正量とZ方向の沈み込み量を学習によって獲得する。
+          学習の教師に使用する文字は、筆はこびの基本要素「とめ」「はらい」「はね」を含む「一」「大」「小」とし、未学習の文字「学」を推論で描くことをゴールとする。
+        </p>
+        <p>
+          方針は BC（Behavioral Cloning）で初期方策を作り、RL（強化学習）で画像一致度を改善し、ROS 2/Gazebo 上で実行可能な閉ループ制御へ落とし込む、である。
+        </p>
+      </section>
+
+      <section class="section">
+        <h2>2. 目的とスコープ</h2>
+
+        <h3>目的</h3>
+        <ul>
+          <li>教師データとして与えられた基準軌道と目標画像をもとに、筆先位置の制御を自動化する。</li>
+          <li>学習時に使わない文字「学」に対して、同じ制御方策を適用できるかを検証する。</li>
+          <li>中心補正済み基準軌道、BC、BC + RL を比較し、視覚評価と定量評価を行う。</li>
+        </ul>
+        <h3>対象範囲</h3>
+        <ul>
+          <li>筆順(csv)と字形(ビットマップ)を与えて、最適な軌道と筆圧を生成する課題であって、文字名から筆順や字形を生成する課題ではない。</li>
+          <li>筆は簡易的なモデルとし、毛先の物理シミュレーションベースの変形や紙面との接触力の模擬までは行わない。Z座標を筆圧に対応させる。筆の把持姿勢の最適化も対象外とする。</li>
+          <li>発展項目として、BC省略（RLのみ）との比較、「学」以外の未学習文字や別サイズへの汎化評価も計画していたが、時間的制約により未実施となった。</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h2>3. 実験環境</h2>
+        <p>環境構築には手間をかけずに、講座で使用した環境をそのまま利用した。実装にはAIコーディングエージェント(GitHub Copilot)を併用した。</p>
+        <ul>
+          <li>OS: WSL(Ubuntu 22.04) / dev container 上で実装・評価を実施。</li>
+          <li>制御基盤: CRANE+ V2、ROS 2 Humble、MoveIt、Gazebo を利用し、ロボットアームの関節軌道制御と紙面描画を模擬。</li>
+          <li>学習基盤: Python, PyTorch, Gymnasium, Stable-Baselines3 を用いて BC と RL を実装。</li>
+        </ul>
+        <img src="./images/gazebo.png" alt="Gazebo環境" style="max-width: 50%;" />
+      </section>
+
+      <section class="section">
+        <h2>4. 工夫した点</h2>
+        <ul>
+          <li>オフラインBCで初期方策を作り、環境込みのRL（Gazebo使用、時間がかかる）でXY補正と筆圧制御の改善を試みた点。</li>
+          <li>文字ごとの個別モデルではなく、「一・大・小」をまとめて学習させる共通ポリシーを導入した点。</li>
+          <li>描画画像と軌跡を評価する軽量レンダラを組み込み、Dice や overflow を定量的に比較できるようにした点。</li>
+          <li>筆先の形状は当初は簡易的に 〇 で近似していたが、試行錯誤の結果 △をベースに、接線方向や筆圧による穂先の制御を簡易的に行うレンダラを作成した点。（別途、筆シミュレーターを作成して検討した）</li>
+          <li>Gazebo空間内の紙面テクスチャをリアルタイムで書き換える方法（描画中の様子をリアルタイムで反映する仕組み）が標準的には無いことが判明したため、Gazeboのカスタムpluginの実装で実現した点。</li>
+          <li>CRANE+ V2が4自由度のため、事前に紙面全面への筆先の到達可能性を検証し、紙位置の調整を行った点。</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h2>5. 学習と推論の構成</h2>
+
+        <h3>実行フロー</h3>
+        <table>
+          <tr>
+            <th>段階</th>
+            <th>内容</th>
+          </tr>
+          <tr>
+            <td>1. データ準備</td>
+            <td>筆順CSVと毛筆体画像から、各文字ごとの教師情報（軌道、軌道中の目標線幅）を作成。</td>
+          </tr>
+          <tr>
+            <td>2. BC学習</td>
+            <td>一・大・小の共通方策を学習し、初期制御を生成。</td>
+          </tr>
+          <tr>
+            <td>3. RL改善</td>
+            <td>BC重みを初期値として、画像一致度と描画補正を最適化。（ROS 2 / MoveIt / Gazebo 使用）</td>
+          </tr>
+          <tr>
+            <td>4. デプロイ・検証</td>
+            <td>学習文字（一・大・小）と未学習文字（学）について、Baseline・BC・BC+RLをGazeboで再生し実測評価。</td>
+          </tr>
+        </table>
+
+        <h3>PPOの報酬関数</h3>
+        <p>各ステップで目標画像との一致度評価を行う。新たに塗った画素が目標画像と重なれば加点し、目標の外へはみ出せば減点する。加えて、行動の大きさと直前の行動からの変化にペナルティを設け、過大な補正や急な変化を抑える。</p>
+        <p><code>報酬 = 5 × 目標内の新規塗り − 5 × 目標外の新規塗り − 0.02 × 行動の二乗平均 − 0.02 × 行動変化の二乗平均</code></p>
+        <p>新規塗りの画素数は目標の画素数で正規化し、筆画の始点・終点とそれ以外に設定した重みを掛ける。全軌道を正常に描き終えたときは、完成画像のDice係数の2倍を追加する。Diceは目標画像からのはみ出しと塗り不足を評価した一致度を示す。（1.0＝完全一致） 動作失敗時はそのステップの報酬を−1として終了し、完成時のDice報酬は加えない。報酬計算には学習文字「一・大・小」の目標画像を使う。</p>
+
+        <h3>学習フェーズ</h3>
+        <img src="./images/system_block_diagram_training.svg" alt="学習フェーズのブロック図" style="max-width: 100%;" />
+        <p>BCでは教師行動にノイズを加えて環境に渡し、次の観測と教師行動を学習データとして収集する。筆モデルによる描画画像・指標は評価に使い、教師行動との誤差で方策を学習する。その重みでPPOを初期化する。BCとPPOの環境はいずれも位置・筆圧を共通の筆モデルへ渡し、描画画像・塗り状態を得る。描画環境から得た観測と報酬で方策を更新し、BC / BC+RLの重みを保存する。</p>
+        <p>PPOではMoveItの逆運動学（IK）により、方策が出したXY補正と筆圧目標から作る筆先の目標XYZを、アームの目標関節角に変換する。controllerがその関節軌道を実行した後、<code>/joint_states</code>で得た実測関節角を順運動学（FK）に通し、実際の筆先位置を求めて次の観測と描画に反映する。筆圧は実測Zから推定する仮想値であり、接触力の測定値ではない。</p>
+
+        <h3>推論フェーズ</h3>
+        <img src="./images/system_block_diagram_inference.svg" alt="推論フェーズのブロック図" style="max-width: 100%;" />
+        <p>基準軌道と目標画像から局所線幅を求め、画像幅−1で正規化して状態とともに観測へ含める。Gazebo実測評価では固定したBC / BC+RL方策でロボットを制御し、実測状態を次の観測へ戻す。筆モデルは実測位置とZから推定した仮想筆圧から描画画像を生成する。今回の未学習文字「学」もGazeboで再生して評価した。</p>
+      </section>
+
+      <section class="section">
+        <h2>6. 学習結果</h2>
+        <h3>Gazebo実測による決定論評価</h3>
+        <p>「一・大・小」で学習したBCを初期値に、Gazebo実測フィードバックを用いてPPOを100エピソード学習した。
+          ノートPCのGPU GeForceRTX 2050で1時間程度。
+          seed 7、学習率0.0002、エントロピー係数0.02、描画速度上限40 mm/s。11935ステップを実行し、学習中のモーション失敗は0件だった。</p>
+        <p>以下に学習済みモデルによる推論結果の評価を示す。Baselineは目標フォントの中心線を筆圧無調整（6pxに固定）で描画した結果である。</p>
+        <table>
+          <tr><th>文字</th><th>Baseline Dice</th><th>BC Dice</th><th>BC+RL Dice</th><th>BC+RLの平均軌道補正量</th></tr>
+          <tr><td>一</td><td>0.66689</td><td>0.92361</td><td>0.89621</td><td>1.48 px</td></tr>
+          <tr><td>大</td><td>0.68161</td><td>0.91311</td><td>0.89142</td><td>1.71 px</td></tr>
+          <tr><td>小</td><td>0.62005</td><td>0.86306</td><td>0.90754</td><td>1.58 px</td></tr>
+          <tr><td>学</td><td>0.71080</td><td>0.68168</td><td>0.73838</td><td>2.80 px</td></tr>
+        </table>
+        <p>平均軌道補正量は方策による補正量であり、補正が働いていることが分かるが、Diceは必ずしも改善していない。以下に軌道の補正結果を示す。BCでは教師に近い軌道、BC+RLでは探索による軌道差が見られる。未学習の「学」では独自の軌道を出している。</p>
+        <div class="card"><img src="./images/trajectories_all_characters.png" alt="4文字のGazebo実測軌道比較" /><div class="caption">中心補正済みreferenceと各方策の実測軌道。筆上げ区間は表示しない。</div></div>
+          <div class="card"><img src="./images/final_images_all_characters.png" alt="4文字のGazebo実測描画比較" /><div class="caption">Gazebo実測位置と推定筆圧による描画：Target / Baseline / BC / BC+RL。</div></div>
+        <p>実際の描画結果では BCのみ vs BC+RL では、細部に違いはあるものの大局的には同等の結果（RLによる改善が十分でない）となった。</p>
+        <div class="gallery">
+          <div class="card"><img src="./images/gaku_target.png" alt="学の目標画像" /><div class="caption">未学習文字「学」の目標画像。</div></div>
+          <div class="card"><img src="./images/gaku_measured.png" alt="学のBC+RL Gazebo実測描画" /><div class="caption">今回のBC+RL方策をGazeboで再生し、実測位置と推定筆圧で生成した描画。</div></div>
+        </div>
+
+        <h3>BC損失の推移</h3>
+        <div class="card" style="padding: 12px;"><img src="./images/bc_loss.png" alt="今回のBCモデルの学習・検証損失" style="max-width: 100%;" /><div class="caption">今回使用したBCの訓練・検証損失。32 episodeのデータで200 epoch学習し、最終検証MSEは0.00020174。</div></div>
+
+        <h3>Gazebo PPOの学習推移</h3>
+        <div class="card" style="padding: 12px;"><img src="./images/learning_curve.png" alt="Gazebo PPO学習100エピソードの報酬とDice" style="max-width: 100%;" /><div class="caption">探索を含む各episodeの報酬とDice、および10 episode移動平均。改善はわずか。</div></div>
+
+        <h3>その他のPPOの更新指標</h3>
+        <p>参考として、同じBCを初期値に理想位置環境（GazeboによるIK→FKなし）で別途PPOを100 episode実行し、各更新の指標を収集した（seed 7、学習率0.0002、エントロピー係数0.02、11935 step、34更新）。</p>
+        <div class="card" style="padding: 12px;"><img src="./images/offline_ppo_diagnostics.png" alt="オフラインPPOの価値損失、方策損失、エントロピー、近似KL、クリップ率" style="max-width: 100%;" /></div>
+        <p>学習数を増やして傾向を観察する余地はある。収束の有無、特に筆モデルによる精度限界が気になるところではある。</p>
+      </section>
+
+      <section class="section">
+        <h2>7. まとめ</h2>
+        <p>
+          本課題では、ロボット書道の精度を高めるために、基準軌道からの補正と筆圧制御を AI で最適化する方針を採用した。
+          今回のGazebo実測評価では「小」と未学習文字「学」のBC+RLがBCを上回り、「一」「大」は下回った。「学」のDiceは、Baseline 0.71、BC 0.68、BC+RL 0.74 とわずかに改善が見られた。
+          ハイパーパラメーターの調整や、筆モデルの高精度化などで、さらなる改善が期待できる。
+        </p>
+      </section>
+    </div>
+  </body>
+</html>

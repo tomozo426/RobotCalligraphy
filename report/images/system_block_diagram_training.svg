@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="920" viewBox="0 0 1200 920" role="img" aria-labelledby="title desc">
+<title id="title">学習フェーズ｜共通の筆モデルを用いたBC・PPO学習</title><desc id="desc">BCの教師行動を環境へ渡し、環境から次の観測を得て教師データにする。描画画像と指標は評価に使い、PPOは環境の描画結果から報酬を計算する。</desc>
+<defs><style>text{font-family:"Noto Sans CJK JP","Yu Gothic",sans-serif;fill:#243347}.heading{font-size:28px;font-weight:700}.label{font-size:21px;font-weight:700}.body{font-size:17px}.note{font-size:16px;fill:#526479}.flow{fill:none;stroke:#526479;stroke-width:2.5;marker-end:url(#arrow)}.feedback{fill:none;stroke:#0f766e;stroke-width:2.5;marker-end:url(#green)}</style><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#526479"/></marker><marker id="green" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#0f766e"/></marker></defs><rect width="1200" height="920" rx="16" fill="#f8fafc"/>
+<text x="40" y="53" class="heading">学習フェーズ｜共通の筆モデルを用いたBC・PPO学習</text>
+<text x="40" y="86" class="note" text-anchor="start">学習対象：一・大・小　／　「学」は学習・モデル選択に使用しない</text>
+<rect x="40" y="120" width="300" height="135" rx="12" fill="#edf4ff" stroke="#3973bd" stroke-width="2"/>
+<text x="190.0" y="153" class="label" text-anchor="middle">学習データ</text>
+<text x="190.0" y="185" class="body" text-anchor="middle">基準軌道CSV・目標文字画像</text>
+<text x="190.0" y="211" class="body" text-anchor="middle">教師行動：XY補正量・筆圧</text>
+<rect x="420" y="120" width="310" height="135" rx="12" fill="#edf4ff" stroke="#3973bd" stroke-width="2"/>
+<text x="575.0" y="153" class="label" text-anchor="middle">BC：教師あり学習</text>
+<text x="575.0" y="185" class="body" text-anchor="middle">観測と教師行動を対応づけ</text>
+<text x="575.0" y="211" class="body" text-anchor="middle">行動の誤差を小さくする</text>
+<rect x="810" y="120" width="350" height="135" rx="12" fill="#fff5e9" stroke="#bf7629" stroke-width="2"/>
+<text x="985.0" y="153" class="label" text-anchor="middle">BC方策を保存</text>
+<text x="985.0" y="185" class="body" text-anchor="middle">BC評価用チェックポイント</text>
+<text x="985.0" y="211" class="body" text-anchor="middle">PPOのActorを初期化</text>
+<path d="M340 188H420" class="flow"/>
+<path d="M730 188H810" class="flow"/>
+<rect x="420" y="335" width="430" height="155" rx="12" fill="#edf9f5" stroke="#178073" stroke-width="2"/>
+<text x="635.0" y="368" class="label" text-anchor="middle">筆モデル・描画</text>
+<text x="635.0" y="400" class="body" text-anchor="middle">筆圧 ↔ 線幅の変換・筆跡の描画</text>
+<text x="635.0" y="426" class="body" text-anchor="middle">描画画像・塗り状態を生成</text>
+<text x="635.0" y="452" class="body" text-anchor="middle">BrushCalligraphyEnv内の共通処理</text>
+<path d="M530 255V335" class="feedback"/>
+<text x="515" y="294" class="note" text-anchor="end">位置・筆圧</text>
+<path d="M690 335V255" class="feedback"/>
+<text x="705" y="294" class="note" text-anchor="start">描画画像・塗り状態</text>
+<rect x="40" y="610" width="300" height="170" rx="12" fill="#edf4ff" stroke="#3973bd" stroke-width="2"/>
+<text x="190.0" y="643" class="label" text-anchor="middle">方策（Actor / Critic）</text>
+<text x="190.0" y="675" class="body" text-anchor="middle">観測 sₜ から行動 aₜ を生成</text>
+<text x="190.0" y="701" class="body" text-anchor="middle">XY補正量・筆圧</text>
+<text x="190.0" y="727" class="body" text-anchor="middle">PPOでパラメータ更新</text>
+<rect x="420" y="610" width="310" height="170" rx="12" fill="#edf9f5" stroke="#178073" stroke-width="2"/>
+<text x="575.0" y="643" class="label" text-anchor="middle">状態遷移・観測の環境</text>
+<text x="575.0" y="675" class="body" text-anchor="middle">BrushCalligraphyEnv</text>
+<text x="575.0" y="701" class="body" text-anchor="middle">位置・筆圧・観測を更新</text>
+<text x="575.0" y="727" class="body" text-anchor="middle">Python / ROS 2接続時は実測</text>
+<rect x="810" y="610" width="350" height="170" rx="12" fill="#fff5e9" stroke="#bf7629" stroke-width="2"/>
+<text x="985.0" y="643" class="label" text-anchor="middle">PPO：報酬から更新</text>
+<text x="985.0" y="675" class="body" text-anchor="middle">塗りの増加・はみ出し・滑らかさ</text>
+<text x="985.0" y="701" class="body" text-anchor="middle">終端Diceなどから報酬を計算</text>
+<text x="985.0" y="727" class="body" text-anchor="middle">収集した経験で方策を改善</text>
+<path d="M985 255V555H190V610" class="flow"/>
+<text x="285" y="544" class="note" text-anchor="middle">BC重みで初期化</text>
+<path d="M535 610V490" class="feedback"/>
+<text x="515" y="520" class="note" text-anchor="end">位置・筆圧</text>
+<path d="M665 490V610" class="feedback"/>
+<text x="680" y="584" class="note" text-anchor="start">描画画像・塗り状態</text>
+<path d="M340 675H420" class="flow"/>
+<text x="380" y="660" class="note" text-anchor="middle">行動 aₜ</text>
+<path d="M730 675H810" class="flow"/>
+<text x="770" y="660" class="note" text-anchor="middle">経験</text>
+<path d="M575 780V820H190V780" class="feedback"/>
+<text x="395" y="810" class="note" text-anchor="middle">次の観測 sₜ₊₁</text>
+<path d="M985 780V865H125V780" class="feedback"/>
+<text x="585" y="854" class="note" text-anchor="middle">PPOの更新を方策へ反映</text>
+<text x="40" y="905" class="note" text-anchor="start">成果物：BC方策 / BC+RL方策の重み　→　推論フェーズへ</text>
+</svg>

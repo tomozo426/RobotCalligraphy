@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="crane_plus">
+  <xacro:include filename="$(find crane_plus_description)/urdf/crane_plus.urdf.xacro" />
+
+  <link name="calligraphy_pen">
+    <inertial>
+      <origin xyz="0 0 0.06" />
+      <mass value="0.02" />
+      <inertia ixx="2.5e-05" ixy="0" ixz="0" iyy="2.5e-05" iyz="0" izz="1e-06" />
+    </inertial>
+    <visual name="barrel">
+      <origin xyz="0 0 0.075" />
+      <geometry><cylinder radius="0.006" length="0.09" /></geometry>
+      <material name="pen_body"><color rgba="0.16 0.20 0.20 1" /></material>
+    </visual>
+    <visual name="brush_neck">
+      <origin xyz="0 0 0.026" />
+      <geometry><cylinder radius="0.004" length="0.008" /></geometry>
+      <material name="brush_neck"><color rgba="0.72 0.48 0.24 1" /></material>
+    </visual>
+    <visual name="brush_tip">
+      <origin xyz="0 0 0.022" />
+      <geometry><mesh filename="file:///home/ubuntu/pai_ws/meshes/brush_tip.stl" /></geometry>
+      <material name="brush_tip"><color rgba="0.20 0.16 0.12 1" /></material>
+    </visual>
+  </link>
+
+  <joint name="calligraphy_pen_fixed_joint" type="fixed">
+    <parent link="crane_plus_link4" />
+    <child link="calligraphy_pen" />
+    <origin xyz="0 0.03 0.18" rpy="0 3.1415926 0" />
+  </joint>
+</robot>

@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="/TextureUpdateGui">
+    <file alias="TextureUpdateGui.qml">TextureUpdateGui.qml</file>
+  </qresource>
+</RCC>
